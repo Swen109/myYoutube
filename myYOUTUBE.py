@@ -55,14 +55,18 @@ class YouTubeViewer(QMainWindow):
         
         # 建立myYoutube標籤
         self.myYoutube_label = QLabel("<a style='text-decoration: none; color: red;' href='#'>myYoutube</a>")
+        # 連結到show_thumbnails_page
         self.myYoutube_label.linkActivated.connect(self.show_thumbnails_page)
+        # 設定字體
         self.myYoutube_label.setFont(self.font)
         self.myYoutube_label.setStyleSheet("font-size: 55px")
+        # 將標myYoutube籤置中
         self.home_page_layout.addWidget(self.myYoutube_label, alignment=Qt.AlignCenter)
         
-        #搜尋欄和搜尋按鈕的佈局
+        # 新增搜尋欄和搜尋按鈕的佈局
         search_layout = QHBoxLayout()
-        search_layout.addStretch(1) # 添加彈簧
+        # 添加彈簧
+        search_layout.addStretch(1) 
 
         # 添加返回按鈕和設定樣式
         self.back_button = QPushButton("⇦")
@@ -70,9 +74,8 @@ class YouTubeViewer(QMainWindow):
         self.back_button.setFixedWidth(50)  # 設定按鈕的寬度
         self.back_button.setFixedHeight(40)  # 設定按鈕的高度
         #點擊後回到首頁 （之後要改成上一頁）
-        self.back_button.clicked.connect(self.show_thumbnails_page)
-        #不要選取框
-        self.back_button.setFocusPolicy(Qt.NoFocus)  
+        self.back_button.clicked.connect(self.show_thumbnails_page) 
+        self.back_button.setFocusPolicy(Qt.NoFocus)  # 不要顯示聚焦框
         #將返回鍵加入search_layout
         search_layout.addWidget(self.back_button, alignment=Qt.AlignLeft | Qt.AlignTop)
 
@@ -91,7 +94,7 @@ class YouTubeViewer(QMainWindow):
         # 新增搜尋按鈕
         search_button = QPushButton("🔍")
         search_button.setStyleSheet("font-size: 30px; color: white; background-color: black;")
-        search_button.clicked.connect(self.search_videos)
+        search_button.clicked.connect(self.search_videos) # 
         search_button.setFixedWidth(40)  # 設定按鈕的寬度
         search_button.setFixedHeight(40)  # 設定按鈕的高度
         search_button.setFocusPolicy(Qt.NoFocus)
