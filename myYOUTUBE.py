@@ -9,19 +9,60 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets
 
 count = 0
+#Create_thumbnail_title(3, self.play_video, self.thumbnails_layout, QVBoxLayout())
+def Create_thumbnail_title(quantity, page, layout):
+        # 獲取quantity個影片
+        api_key = "AIzaSyBZQYb6v1_U1-E8gkavifckIJzAz5-0tHM"
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        request = youtube.videos().list(part='snippet', chart='mostPopular', regionCode='TW', maxResults=quantity)
+        response = request.execute()
+
+
+        # 為每個影片創建帶縮圖的按鈕
+        for item in response['items']:
+            video_id = item['id']
+            title = item['snippet']['title']
+            thumbnail_url = item['snippet']['thumbnails']['medium']['url']
+
+            thumbnail_button = QPushButton()
+            pixmap = QPixmap()
+            pixmap.loadFromData(requests.get(thumbnail_url).content)
+            thumbnail_button.setIcon(QIcon(pixmap))
+            thumbnail_button.setIconSize(QSize(200, 150))
+            thumbnail_button.clicked.connect(lambda _, vid=video_id: page(vid))
+            thumbnail_button.setFocusPolicy(Qt.NoFocus)
+            layout.addWidget(thumbnail_button)
+
+            # 創建帶標題的標籤
+            thumbnail_title = QLabel(title)
+            thumbnail_title.setAlignment(Qt.AlignCenter)
+            thumbnail_title.setStyleSheet("color: white")
+            thumbnail_title.setFixedWidth(200)
+            thumbnail_title.setFixedHeight(15)
+            thumbnail_title.setWordWrap(True)  # 啟用自動換行
+
+
+            # 將按鈕和標籤添加到佈局
+            video_layout = QVBoxLayout()
+            video_layout.addStretch(1)
+            video_layout.addWidget(thumbnail_button)
+            video_layout.addWidget(thumbnail_title)
+            video_layout.addStretch(1)
+            
+            thumbnail_button.setToolTip(title)
+
+            layout.addLayout(video_layout)
 
 class YouTubeViewer(QMainWindow):
     def __init__(self):
         super(YouTubeViewer, self).__init__()
 
+        # 視窗標題、位置大小
         self.setWindowTitle("YouTube Viewer")
         self.setGeometry(100, 100, 800, 600)
 
         self.init_ui()
         self.Ui_home_page()
-        # self.play_video() 重複到的變數要改或是整合在一起
-        # self.show_thumbnails_page()
-        # self.search_videos() 會顯示在一打開的頁面
 
     def init_ui(self):
         
@@ -49,14 +90,14 @@ class YouTubeViewer(QMainWindow):
         self.home_page_layout = QVBoxLayout(self.central_widget)
 
         # 創建顯示縮圖的頁面
-        home_page = QWidget()
-        self.thumbnails_layout = QHBoxLayout(home_page)
+        self.home_page = QWidget()
+        self.thumbnails_layout = QHBoxLayout(self.home_page)
         self.home_page_layout.addLayout(self.thumbnails_layout)
         
         # 建立myYoutube標籤
         self.myYoutube_label = QLabel("<a style='text-decoration: none; color: red;' href='#'>myYoutube</a>")
         # 連結到show_thumbnails_page
-        self.myYoutube_label.linkActivated.connect(self.show_thumbnails_page)
+        self.myYoutube_label.linkActivated.connect(self.show_home_page)
         # 設定字體
         self.myYoutube_label.setFont(self.font)
         self.myYoutube_label.setStyleSheet("font-size: 55px")
@@ -74,7 +115,7 @@ class YouTubeViewer(QMainWindow):
         self.back_button.setFixedWidth(50)  # 設定按鈕的寬度
         self.back_button.setFixedHeight(40)  # 設定按鈕的高度
         #點擊後回到首頁 （之後要改成上一頁）
-        self.back_button.clicked.connect(self.show_thumbnails_page) 
+        self.back_button.clicked.connect(self.show_home_page) 
         self.back_button.setFocusPolicy(Qt.NoFocus)  # 不要顯示聚焦框
         #將返回鍵加入search_layout
         search_layout.addWidget(self.back_button, alignment=Qt.AlignLeft | Qt.AlignTop)
@@ -110,53 +151,54 @@ class YouTubeViewer(QMainWindow):
         # 將 QStackedWidget 添加到其中
         self.home_page_layout.addWidget(self.stacked_widget)
 
-        self.stacked_widget.addWidget(home_page)
+        self.stacked_widget.addWidget(self.home_page)
 
-        # 獲取前 3 個熱門影片
-        api_key = "AIzaSyBZQYb6v1_U1-E8gkavifckIJzAz5-0tHM"
-        youtube = build('youtube', 'v3', developerKey=api_key)
-        request = youtube.videos().list(part='snippet', chart='mostPopular', regionCode='TW', maxResults=3)
-        response = request.execute()
-
-
-        # 為每個影片創建帶縮圖的按鈕
-        for item in response['items']:
-            video_id = item['id']
-            title = item['snippet']['title']
-            thumbnail_url = item['snippet']['thumbnails']['medium']['url']
-
-            self.thumbnail_button = QPushButton()
-            pixmap = QPixmap()
-            pixmap.loadFromData(requests.get(thumbnail_url).content)
-            self.thumbnail_button.setIcon(QIcon(pixmap))
-            self.thumbnail_button.setIconSize(QSize(200, 150))
-            # button.setStyleSheet("border: 1px solid white;") # 框起來看一下範圍
-            self.thumbnail_button.clicked.connect(lambda _, vid=video_id: self.play_video(vid))
-            self.thumbnail_button.setFocusPolicy(Qt.NoFocus)
-            self.thumbnails_layout.addWidget(self.thumbnail_button)
-
-            # 創建帶標題的標籤
-            label = QLabel(title)
-            label.setAlignment(Qt.AlignCenter)
-            label.setStyleSheet("color: white")
-            # label.setStyleSheet("color: white; border: 1px solid red;") # 框起來看一下範圍
-            label.setFixedWidth(200)
-            label.setFixedHeight(15)
-            label.setWordWrap(True)  # 啟用自動換行
+        # # 獲取前 3 個熱門影片
+        # api_key = "AIzaSyBZQYb6v1_U1-E8gkavifckIJzAz5-0tHM"
+        # youtube = build('youtube', 'v3', developerKey=api_key)
+        # request = youtube.videos().list(part='snippet', chart='mostPopular', regionCode='TW', maxResults=3)
+        # response = request.execute()
 
 
-            # 將按鈕和標籤添加到垂直佈局
-            video_layout = QVBoxLayout()
-            video_layout.addStretch(1)
-            video_layout.addWidget(self.thumbnail_button)
-            video_layout.addWidget(label)
-            video_layout.addStretch(1)
+        # # 為每個影片創建帶縮圖的按鈕
+        # for item in response['items']:
+        #     video_id = item['id']
+        #     title = item['snippet']['title']
+        #     thumbnail_url = item['snippet']['thumbnails']['medium']['url']
+
+        #     self.thumbnail_button = QPushButton()
+        #     pixmap = QPixmap()
+        #     pixmap.loadFromData(requests.get(thumbnail_url).content)
+        #     self.thumbnail_button.setIcon(QIcon(pixmap))
+        #     self.thumbnail_button.setIconSize(QSize(200, 150))
+        #     # button.setStyleSheet("border: 1px solid white;") # 框起來看一下範圍
+        #     self.thumbnail_button.clicked.connect(lambda _, vid=video_id: self.play_video(vid))
+        #     self.thumbnail_button.setFocusPolicy(Qt.NoFocus)
+        #     self.thumbnails_layout.addWidget(self.thumbnail_button)
+
+        #     # 創建帶標題的標籤
+        #     label = QLabel(title)
+        #     label.setAlignment(Qt.AlignCenter)
+        #     label.setStyleSheet("color: white")
+        #     # label.setStyleSheet("color: white; border: 1px solid red;") # 框起來看一下範圍
+        #     label.setFixedWidth(200)
+        #     label.setFixedHeight(15)
+        #     label.setWordWrap(True)  # 啟用自動換行
+
+
+        #     # 將按鈕和標籤添加到垂直佈局
+        #     video_layout = QVBoxLayout()
+        #     video_layout.addStretch(1)
+        #     video_layout.addWidget(self.thumbnail_button)
+        #     video_layout.addWidget(label)
+        #     video_layout.addStretch(1)
             
-            self.thumbnail_button.setToolTip(title)
+        #     self.thumbnail_button.setToolTip(title)
 
-            # 將垂直佈局添加到水平佈局
-            self.thumbnails_layout.addLayout(video_layout)
+        # # 將垂直佈局添加到水平佈局
+        # self.thumbnails_layout.addLayout(video_layout)
 
+        Create_thumbnail_title(3, self.play_video, self.thumbnails_layout)
 
 
 
@@ -186,11 +228,13 @@ class YouTubeViewer(QMainWindow):
         # 顯示返回按鈕
         self.back_button.setVisible(True) 
 
+    def show_home_page(self):
+        # 將 QWebEngineView 的內容設置為空白頁面
+        self.web_view.setHtml('')
 
-    def show_thumbnails_page(self):
         # 切換回顯示縮圖的頁面
-        self.stacked_widget.setCurrentIndex(0)
-
+        self.stacked_widget.setCurrentWidget(self.home_page)
+        
         self.back_button.setVisible(False)  # 返回按鈕設置為不可見
 
     
