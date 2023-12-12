@@ -9,7 +9,6 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets
 
 count = 0
-#Create_thumbnail_title(3, self.play_video, self.thumbnails_layout, QVBoxLayout())
 def Create_thumbnail_title(quantity, page, layout):
         # 獲取quantity個影片
         api_key = "AIzaSyBZQYb6v1_U1-E8gkavifckIJzAz5-0tHM"
@@ -24,13 +23,21 @@ def Create_thumbnail_title(quantity, page, layout):
             title = item['snippet']['title']
             thumbnail_url = item['snippet']['thumbnails']['medium']['url']
 
+            #建立縮圖button 
             thumbnail_button = QPushButton()
+            #QPixmap是pyqt中用於處理和顯示圖片的類別
             pixmap = QPixmap()
+            #將 YouTube 影片的縮圖從網路下載到程序中，以便在應用程式中顯示
             pixmap.loadFromData(requests.get(thumbnail_url).content)
+
             thumbnail_button.setIcon(QIcon(pixmap))
             thumbnail_button.setIconSize(QSize(200, 150))
+            # 點擊後執行lambda 函數 執行 self.play_video(video_id) （跳轉到播放頁面）
             thumbnail_button.clicked.connect(lambda _, vid=video_id: page(vid))
+            # 不顯示選擇框
             thumbnail_button.setFocusPolicy(Qt.NoFocus)
+
+            # 在佈局內加入thumbnail_button
             layout.addWidget(thumbnail_button)
 
             # 創建帶標題的標籤
