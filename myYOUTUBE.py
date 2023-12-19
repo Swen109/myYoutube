@@ -39,6 +39,74 @@ class YouTubeViewer(QMainWindow):
         self.font = QFont()
         self.font.setFamily("Arial")  # 設置字型
 
+    def make_thumbnail_and_title(self, nextPageToken, layoutType, keyword, mainLayout):
+
+        # 建立 YouTube API 的服務物件
+        api_key = "AIzaSyBZQYb6v1_U1-E8gkavifckIJzAz5-0tHM"
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        # 指定取得snippet（標題、描述、發佈時間、頻道資訊等）
+        request = youtube.videos().list(part='snippet', chart='mostPopular', regionCode='TW', maxResults=3, pageToken=nextPageToken)
+        # 回傳一個字典
+        response = request.execute()
+    
+        if keyword :
+            # 將搜尋欄的文字丟給keyword
+            keyword = self.search_bar.text()
+            request = youtube.search().list(q=keyword, part='snippet', type='video', maxResults=10, regionCode='TW', pageToken=nextPageToken)
+            response = request.execute()
+        else:
+            pass
+
+        # 為每個影片創建帶縮圖的按鈕
+        for item in response['items']:
+
+        # 從字典取得需要的資訊(用搜尋欄找的影片中 id內的videoId才是影片id
+            if keyword :
+                video_id = item['id']['videoId']
+            else:
+                video_id = item['id']
+
+            title = item['snippet']['title']
+            thumbnail_url = item['snippet']['thumbnails']['medium']['url']
+        
+        # 創建縮圖按紐
+            # QPixmap() => Qt框架中的一個類別，用來處理圖像
+            pixmap = QPixmap()
+            # 將YouTube影片的縮圖從網路下載到程序中，以便在應用程式中顯示
+            pixmap.loadFromData(requests.get(thumbnail_url).content)
+            self.thumbnail_button = QPushButton()
+            self.thumbnail_button.setIcon(QIcon(pixmap))
+            self.thumbnail_button.setIconSize(QSize(260, 150))
+            # 不要顯示選擇框(點擊後的虛線)
+            self.thumbnail_button.setFocusPolicy(Qt.NoFocus)
+
+        # 創建帶標題文字的標籤
+            self.thumbnail_title = QLabel(title)
+            self.thumbnail_title.setAlignment(Qt.AlignCenter)
+            self.thumbnail_title.setStyleSheet("color: white")
+            # 文字自動換行
+            self.thumbnail_title.setWordWrap(True)
+            # 設置標題範圍的長寬
+            self.thumbnail_title.setFixedWidth(260)
+            self.thumbnail_title.setFixedHeight(60)
+
+        # 功能
+            # 點擊縮圖後執行self.play_video(video_id)
+            self.thumbnail_button.clicked.connect(lambda _, vid=video_id: self.show_video_page(vid))
+            # 鼠標移至縮圖按鈕上時會顯示完整標題
+            self.thumbnail_button.setToolTip(title)
+
+        # 排版
+            #在主佈局內加入 thumbnail_button
+            mainLayout.addWidget(self.thumbnail_button)
+            # 創建垂直佈局，將縮圖和標題放入
+            video_and_title_layout = layoutType()
+            video_and_title_layout.addStretch(1)
+            video_and_title_layout.addWidget(self.thumbnail_button)
+            video_and_title_layout.addWidget(self.thumbnail_title)
+            video_and_title_layout.addStretch(1)
+            # 將video_and_title_layout添加到主佈局
+            mainLayout.addLayout(video_and_title_layout)
         
     def Ui_home_page(self):
         # 創建home page佈局
@@ -108,59 +176,7 @@ class YouTubeViewer(QMainWindow):
 
         self.stacked_widget.addWidget(self.home_page)
 
-        # 建立 YouTube API 的服務物件
-        api_key = "AIzaSyBZQYb6v1_U1-E8gkavifckIJzAz5-0tHM"
-        youtube = build('youtube', 'v3', developerKey=api_key)
-        # 指定取得snippet（標題、描述、發佈時間、頻道資訊等）
-        request = youtube.videos().list(part='snippet', chart='mostPopular', regionCode='TW', maxResults=3)
-        # 回傳一個字典
-        response = request.execute()
-
-        # 為每個影片創建帶縮圖的按鈕
-        for item in response['items']:
-        # 從字典取得需要的資訊
-            video_id = item['id']
-            title = item['snippet']['title']
-            thumbnail_url = item['snippet']['thumbnails']['medium']['url']
-
-        # 創建縮圖按紐
-            # QPixmap() => Qt框架中的一個類別，用來處理圖像
-            pixmap = QPixmap()
-            # 將YouTube影片的縮圖從網路下載到程序中，以便在應用程式中顯示
-            pixmap.loadFromData(requests.get(thumbnail_url).content)
-            self.thumbnail_button = QPushButton()
-            self.thumbnail_button.setIcon(QIcon(pixmap))
-            self.thumbnail_button.setIconSize(QSize(260, 150))
-            # 不要顯示選擇框(點擊後的虛線)
-            self.thumbnail_button.setFocusPolicy(Qt.NoFocus)
-
-        # 創建帶標題文字的標籤
-            self.thumbnail_title = QLabel(title)
-            self.thumbnail_title.setAlignment(Qt.AlignCenter)
-            self.thumbnail_title.setStyleSheet("color: white")
-            # 文字自動換行
-            self.thumbnail_title.setWordWrap(True)
-            # 設置標題範圍的長寬
-            self.thumbnail_title.setFixedWidth(260)
-            self.thumbnail_title.setFixedHeight(60)
-
-        # 功能
-            # 點擊縮圖後執行self.play_video(video_id)
-            self.thumbnail_button.clicked.connect(lambda _, vid=video_id: self.show_video_page(vid))
-            # 鼠標移至縮圖按鈕上時會顯示完整標題
-            self.thumbnail_button.setToolTip(title)
-
-        # 排版
-            #在主佈局內加入 thumbnail_button
-            self.thumbnails_layout.addWidget(self.thumbnail_button)
-            # 創建垂直佈局，將縮圖和標題放入
-            video_and_title_layout = QVBoxLayout()
-            video_and_title_layout.addStretch(1)
-            video_and_title_layout.addWidget(self.thumbnail_button)
-            video_and_title_layout.addWidget(self.thumbnail_title)
-            video_and_title_layout.addStretch(1)
-            # 將video_and_title_layout添加到主佈局
-            self.thumbnails_layout.addLayout(video_and_title_layout)
+        self.make_thumbnail_and_title(None, QVBoxLayout, False, self.thumbnails_layout)
 
 
     def show_video_page(self, video_id):
@@ -218,68 +234,7 @@ class YouTubeViewer(QMainWindow):
         scroll_area.setStyleSheet("color: black; border: none;")
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-
-        # 建立 YouTube API 的服務物件
-        api_key = "AIzaSyBZQYb6v1_U1-E8gkavifckIJzAz5-0tHM"
-        youtube = build('youtube', 'v3', developerKey=api_key)
-        
-        # # 初始化變數
-        # videos = []
-
-        # 將 nextPageToken 初始化為 None
-        nextPageToken = None  
-        
-        # 將搜尋欄的文字丟給keyword
-        keyword = self.search_bar.text()
-        request = youtube.search().list(q=keyword, part='snippet', type='video', maxResults=10, regionCode='TW', pageToken=nextPageToken)
-        response = request.execute()
-
-         # 為每個影片創建帶縮圖的按鈕
-        for item in response['items']:
-        # 從字典取得需要的資訊
-            video_id = item['id']
-            title = item['snippet']['title']
-            thumbnail_url = item['snippet']['thumbnails']['medium']['url']
-
-        # 創建縮圖按紐
-            # QPixmap() => Qt框架中的一個類別，用來處理圖像
-            pixmap = QPixmap()
-            # 將YouTube影片的縮圖從網路下載到程序中，以便在應用程式中顯示
-            pixmap.loadFromData(requests.get(thumbnail_url).content)
-            self.thumbnail_button = QPushButton()
-            self.thumbnail_button.setIcon(QIcon(pixmap))
-            self.thumbnail_button.setIconSize(QSize(260, 150))
-            # 不要顯示選擇框(點擊後的虛線)
-            self.thumbnail_button.setFocusPolicy(Qt.NoFocus)
-
-        # 創建帶標題文字的標籤
-            self.thumbnail_title = QLabel(title)
-            self.thumbnail_title.setAlignment(Qt.AlignCenter)
-            self.thumbnail_title.setStyleSheet("color: white")
-            # 文字自動換行
-            self.thumbnail_title.setWordWrap(True)
-            # 設置標題範圍的長寬
-            self.thumbnail_title.setFixedWidth(260)
-            self.thumbnail_title.setFixedHeight(60)
-
-        # 功能
-            # 點擊縮圖後執行self.play_video(video_id)
-            self.thumbnail_button.clicked.connect(lambda _, vid=video_id: self.show_video_page(vid))
-            # 鼠標移至縮圖按鈕上時會顯示完整標題
-            self.thumbnail_button.setToolTip(title)
-
-        # 排版
-            #在主佈局內加入 thumbnail_button
-            list_layout.addWidget(self.thumbnail_button)
-            # 創建水平佈局，將縮圖和標題放入
-            video_and_title_layout = QHBoxLayout()
-            video_and_title_layout.addStretch(1)
-            video_and_title_layout.addWidget(self.thumbnail_button)
-            video_and_title_layout.addWidget(self.thumbnail_title)
-            video_and_title_layout.addStretch(1)
-            # 將video_and_title_layout添加到主佈局
-            list_layout.addLayout(video_and_title_layout)
-
+        self.make_thumbnail_and_title(None, QHBoxLayout, True, list_layout)
 
             # # 如果有下一頁，取得 nextPageToken
             # nextPageToken = response.get('nextPageToken')
