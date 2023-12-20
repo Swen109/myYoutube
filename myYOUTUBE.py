@@ -112,71 +112,73 @@ class YouTubeViewer(QMainWindow):
         # 創建home page佈局
         self.home_page_layout = QVBoxLayout(self.central_widget)
 
-        # 創建顯示縮圖的頁面
+        # 創建首頁頁面
         self.home_page = QWidget()
         self.thumbnails_layout = QHBoxLayout(self.home_page)
         self.home_page_layout.addLayout(self.thumbnails_layout)
         
         # 建立myYoutube標籤
         self.myYoutube_label = QLabel("<a style='text-decoration: none; color: red;' href='#'>myYoutube</a>")
-        # 連結到show_thumbnails_page
-        self.myYoutube_label.linkActivated.connect(self.show_home_page)
         # 設定字體
         self.myYoutube_label.setFont(self.font)
         self.myYoutube_label.setStyleSheet("font-size: 55px")
-        # 將標myYoutube籤置中
-        self.home_page_layout.addWidget(self.myYoutube_label, alignment=Qt.AlignCenter)
-        
-        # 新增搜尋欄和搜尋按鈕的佈局
-        search_layout = QHBoxLayout()
-        # 添加彈簧
-        search_layout.addStretch(1) 
 
+    #創建物件
         # 添加返回按鈕和設定樣式
         self.back_button = QPushButton("⇦")
         self.back_button.setStyleSheet("font-size: 50px; color: white;") # 字體大小、顏色
         self.back_button.setFixedWidth(50)  # 設定按鈕的寬度
         self.back_button.setFixedHeight(40)  # 設定按鈕的高度
-        #點擊後回到首頁 （之後要改成上一頁）
-        self.back_button.clicked.connect(self.show_home_page) 
         self.back_button.setFocusPolicy(Qt.NoFocus)  # 不要顯示聚焦框
-        #將返回鍵加入search_layout
-        search_layout.addWidget(self.back_button, alignment=Qt.AlignLeft | Qt.AlignTop)
-
         self.back_button.setVisible(False)  # 在home page時 返回鍵設置為不可見
-
-        # 添加彈簧
-        search_layout.addStretch(3)
 
         # 新增搜尋欄位
         self.search_bar = QtWidgets.QLineEdit()
         self.search_bar.setStyleSheet("font-size: 25px; color: white; background-color: Black;")
         self.search_bar.setFixedWidth(400)  # 設定寬度
         self.search_bar.setFixedHeight(40)  # 設定高度
-        search_layout.addWidget(self.search_bar, alignment=Qt.AlignCenter)
 
         # 新增搜尋按鈕
         search_button = QPushButton("🔍")
         search_button.setStyleSheet("font-size: 30px; color: white; background-color: black;")
-        search_button.clicked.connect(self.search_videos) # 
         search_button.setFixedWidth(40)  # 設定按鈕的寬度
         search_button.setFixedHeight(40)  # 設定按鈕的高度
         search_button.setFocusPolicy(Qt.NoFocus)
-        search_layout.addWidget(search_button)
 
+    #排版
+        # 新增搜尋欄和搜尋按鈕的佈局
+        search_layout = QHBoxLayout()
+        # 將 QStackedWidget 添加到主佈局中
+        self.home_page_layout.addWidget(self.stacked_widget)
+        # 將home_page加入QStackedWidget
+        self.stacked_widget.addWidget(self.home_page)
+        # 將標myYoutube籤置中
+        self.home_page_layout.addWidget(self.myYoutube_label, alignment=Qt.AlignCenter)
+        # 添加彈簧
+        search_layout.addStretch(1) 
+        # 將返回鍵加入search_layout
+        search_layout.addWidget(self.back_button, alignment=Qt.AlignLeft | Qt.AlignTop)
+        # 添加彈簧
+        search_layout.addStretch(3)
+        # 將搜尋欄位和搜尋紐加入水平佈局
+        search_layout.addWidget(self.search_bar, alignment=Qt.AlignCenter)
+        search_layout.addWidget(search_button)
         # 添加彈簧
         search_layout.addStretch(5)
-
-
         # 將搜尋欄位和搜尋按鈕的水平佈局添加到主佈局
         self.home_page_layout.addLayout(search_layout)
-
-        # 將 QStackedWidget 添加到其中
-        self.home_page_layout.addWidget(self.stacked_widget)
-
-        self.stacked_widget.addWidget(self.home_page)
-
+        # 製作縮圖和標題
         self.make_thumbnail_and_title(None, QVBoxLayout, False, self.thumbnails_layout)
+    
+
+    #功能
+        # myYoutube連結到show_thumbnails_page
+        self.myYoutube_label.linkActivated.connect(self.show_home_page)
+        # 點擊後回到首頁 （之後要改成上一頁）
+        self.back_button.clicked.connect(self.show_home_page) 
+        # 點擊後切換到search_videos頁面
+        search_button.clicked.connect(self.search_videos) 
+
 
 
     def show_video_page(self, video_id):
@@ -188,9 +190,9 @@ class YouTubeViewer(QMainWindow):
         # 創建QWidget 並將play_page設置為垂直佈局
         play_page = QWidget()
         play_layout = QVBoxLayout(play_page)
+
         # 將web_view加入主佈局
         play_layout.addWidget(self.web_view)
-
         # 將play_page加入QStackedWidget
         self.stacked_widget.addWidget(play_page)
         # 切換到播放頁面
@@ -203,9 +205,11 @@ class YouTubeViewer(QMainWindow):
         # 將 QWebEngineView 的內容設置為空白頁面
         self.web_view.setHtml('')
 
-        # 切換到home_page
+        # 將 QStackedWidget 添加到 home_page_layout 中
+        self.home_page_layout.addWidget(self.stacked_widget)
+        # 切換到 home_page
         self.stacked_widget.setCurrentWidget(self.home_page)
-        
+
         self.back_button.setVisible(False)  # 返回按鈕設置為不可見
 
     
